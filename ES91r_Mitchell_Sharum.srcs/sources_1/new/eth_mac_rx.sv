@@ -40,7 +40,24 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
     // state definition (transmission will occur as frame onstruction progresses through states)
     enum logic [2:0] {IDLE, PREAMBLE, HEADER, PAYLOAD, CRC, DONE} state, next_state;
     
-    // 
+    // shift register to transmit the frame as it is being constructed (1 byte at a time), and a countrer to track how many bytes we've tramsmit
+    reg [7:0] tx_sr;
+    reg [15:0] byt_counter;
+    
+    // ethernet MAC state machine
+    always @(posedge i_clk) begin
+        if (i_rst) begin
+            state <= IDLE;
+            o_gmii_tx_en = 1'b0;
+        end else begin
+            
+            // MAC state transition logic
+            case (state) 
+                
+                // in IDLE state, wait for transmission bit to assert before beginning frame construction
+                IDLE: 
+                    
+        
     
 endmodule
 
