@@ -4,7 +4,7 @@
 <!-- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.                   -->
 <!-- Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.   -->
 
-<Project Product="Vivado" Version="7" Minor="67" Path="C:/Users/ros3142/ES91r_Mitchell_Sharum/ES91r_Mitchell_Sharum.xpr">
+<Project Product="Vivado" Version="7" Minor="67" Path="C:/Users/ros3142/Desktop/RTL Projects/ES91r_Mitchell_Sharum/ES91r_Mitchell_Sharum.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="5835909f2f24447193c02879cdf05ba1"/>
@@ -97,14 +97,6 @@
         </FileInfo>
       </File>
       <File Path="$PSRCDIR/sources_1/new/tb_crc.sv">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/new/rst_gen.sv">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
