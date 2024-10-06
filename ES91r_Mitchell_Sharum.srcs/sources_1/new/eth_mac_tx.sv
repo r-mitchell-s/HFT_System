@@ -39,7 +39,7 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
     );
     
     // state definition (transmission will occur as frame onstruction progresses through states)
-    enum logic [2:0] {IDLE, PREAMBLE, HEADER, PAYLOAD, CRC, DONE} state, next_state;
+    enum logic [2:0] {IDLE, PREAMBLE, HEADER, PAYLOAD, CRC, DONE} state = IDLE, next_state;
     
     // shift register to transmit the frame as it is being constructed (1 byte at a time), and a countrer to track how many bytes we've tramsmit
     reg [7:0] tx_sr;
@@ -56,6 +56,8 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
             state <= IDLE;
             o_gmii_tx_en <= 1'b0;
         end else begin
+        
+            state <= next_state;
             
             // MAC state transition logic
             case (state) 
@@ -63,37 +65,37 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
                 // wait for transmission bit to assert before beginning frame construction
                 IDLE: begin
                     if (i_tx_valid) begin
-                        state <= PREAMBLE;
-                        crc_en <= 1'b0;
                         byte_counter <= 0;
+                        next_state <= PREAMBLE;
+                        crc_en <= 1'b0;
+                    end else begin
+                        next_state <= IDLE;
+                        o_gmii_tx_en <= 1'b1;
                     end
                 end
                 
                 // construct and send preamble abnd start-frame delimeter
                 PREAMBLE: begin
-                    
+
                     // start transmitting
-                    o_gmii_tx_en <= 1'b1;
+                    
                     
                     // preamble consists of 7 bytes of 10101010 (0xAA)
                     if (byte_counter < 7) begin
                         o_gmii_txd <= 8'hAA;
+                        byte_counter <= byte_counter + 1;
                         
                     // SFD consists of 1 byte of 10101011, and then begin transmitting header
                     end else if (byte_counter == 7) begin
                         o_gmii_txd <= 8'hAB;
-                        state <= HEADER;
                         byte_counter <= 0;
-                    end 
-                    
-                    // increment the byte counter with every transmission
-                    byte_counter <= byte_counter + 1;
-                    
+                        next_state <= HEADER;
+                    end
                 end
                 
                 // transmit ethernet header contents (src and dst MAC addr and ethertype
                 HEADER: begin
-                    
+
                     // conditional to transmit correct bytes
                     case (byte_counter)
                         // destination MAC (6 bytes)
@@ -117,65 +119,69 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
                         13: o_gmii_txd <= i_ether_type[7:0];
                     endcase
                     
-                    // increment byte counter
-                    byte_counter <= byte_counter + 1;
-                    
                     // switch states when complete
                     if (byte_counter == 13) begin
-                        state <= PAYLOAD;
                         byte_counter <= 0;
-                    end 
+                        next_state <= PAYLOAD;
+                    
+                    // increment byte counter
+                    end else begin
+                        byte_counter <= byte_counter + 1;
+                    end
                 end
                 
                 
                 // payload transmission
                 PAYLOAD: begin
-                
+
                     // only transmit bytes so long as we have no transmit the whole payload
                     if (byte_counter < PAYLOAD_WIDTH / 8) begin
                         
                         // payload shift register takes in the byte strting at byte_counter * 8 (byte 0 them 1 then 2...)
-                        tx_sr <= i_payload_data[byte_counter * 8 +: 8];
-                        o_gmii_txd <= tx_sr;
+                        tx_sr <= i_payload_data[(byte_counter) * 8 +: 8];
+                        o_gmii_txd <= tx_sr;                    
+                        
+                        // increment byte counter
                         byte_counter <= byte_counter + 1;
+                        
                     end else if (byte_counter >= PAYLOAD_WIDTH / 8) begin
                         crc_en <= 1'b1; // Start CRC generation
-                        state <= CRC;
+                        next_state <= CRC;
+                        byte_counter <= 0;
                     end 
                 end 
 
  
                 // CRC transmission 
                 CRC: begin
+
                     case (byte_counter)
                         0: o_gmii_txd <= crc_out[31:24];
                         1: o_gmii_txd <= crc_out[23:16];
                         2: o_gmii_txd <= crc_out[15:8];
                         3: o_gmii_txd <= crc_out[7:0];
-                    endcase
-                    
-                    // increment byte counter and check to see if you are done
-                    byte_counter <= byte_counter + 1;                              
+                    endcase                                
                     
                     // end transmission once crc finished
                     if (byte_counter == 3) begin
-                        state <= DONE;
+                        next_state <= DONE;
                         byte_counter <= 0;
+                    
+                    // increment byte counter and check to see if you are done
+                    end else begin
+                        byte_counter <= byte_counter + 1; 
                     end
                 end 
                 
                 // once we finish frame construction, resume IDLE state
                 DONE: begin
                     o_gmii_tx_en <= 1'b0;
-                    state <= IDLE;
+                    next_state <= IDLE;
                 end
             endcase                      
         end  
     end
     
         // instantiate CRC generation module to generate the last 4 bytes of the ethernet frame based on header and payload bits
-        crc_gen crc(.i_clk(i_clk),
- .i_rst(i_rst), .i_crc_en(crc_en),
- .i_data(o_gmii_txd),
- .o_crc(crc_out));      
+        crc_gen crc(.i_clk(i_clk), .i_rst(i_rst), .i_crc_en(crc_en), .i_data(o_gmii_txd), .o_crc(crc_out));      
 endmodule

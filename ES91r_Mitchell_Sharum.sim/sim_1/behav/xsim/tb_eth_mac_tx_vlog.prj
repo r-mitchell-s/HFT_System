@@ -1,0 +1,13 @@
+# compile verilog/system verilog design source files
+sv xil_defaultlib  \
+"../../../../ES91r_Mitchell_Sharum.srcs/sources_1/new/crc_gen.sv" \
+"../../../../ES91r_Mitchell_Sharum.srcs/sources_1/new/eth_mac_tx.sv" \
+"../../../../ES91r_Mitchell_Sharum.srcs/sources_1/new/tb_eth_mac_tx.sv" \
+"../../../../ES91r_Mitchell_Sharum.srcs/sources_1/new/top.sv" \
+"../../../../ES91r_Mitchell_Sharum.srcs/sources_1/new/tb_crc_gen.sv" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort
