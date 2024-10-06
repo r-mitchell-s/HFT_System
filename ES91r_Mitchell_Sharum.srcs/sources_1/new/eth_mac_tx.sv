@@ -35,7 +35,8 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
     
     // interface to PHY
     output logic [7:0]  o_gmii_txd,                         // data sent to PHY
-    output logic        o_gmii_tx_en                        // transmit enable signal
+    output logic        o_gmii_tx_en,                       // transmit enable signal
+    output logic        o_gmii_data_valid                   // informs the PCS of whether or not the MAC is outputting data
     );
     
     // state definition (transmission will occur as frame onstruction progresses through states)
@@ -55,6 +56,7 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
         if (i_rst) begin
             state <= IDLE;
             o_gmii_tx_en <= 1'b0;
+            o_gmii_data_valid <= 1'b0;
         end else begin
         
             state <= next_state;
@@ -68,6 +70,7 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
                         byte_counter <= 0;
                         next_state <= PREAMBLE;
                         crc_en <= 1'b0;
+                        o_gmii_data_valid <= 1'b0;
                     end else begin
                         next_state <= IDLE;
                         o_gmii_tx_en <= 1'b1;
@@ -78,7 +81,7 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
                 PREAMBLE: begin
 
                     // start transmitting
-                    
+                    o_gmii_data_valid <= 1'b1;
                     
                     // preamble consists of 7 bytes of 10101010 (0xAA)
                     if (byte_counter < 7) begin
@@ -175,6 +178,7 @@ module eth_mac_tx #(PAYLOAD_WIDTH = 368)(
                 
                 // once we finish frame construction, resume IDLE state
                 DONE: begin
+                    o_gmii_data_valid <= 1'b0;
                     o_gmii_tx_en <= 1'b0;
                     next_state <= IDLE;
                 end
