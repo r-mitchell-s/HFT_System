@@ -38,6 +38,8 @@ module eth_mac_tx_tb;
 
     // Test sequence
     initial begin
+
+        $dumpvars(0, eth_mac_tx);
         // Initialize inputs
         i_rst = 1;
         i_tx_valid = 0;

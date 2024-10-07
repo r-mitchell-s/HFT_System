@@ -31,7 +31,7 @@ module eth_pcs_tx (
     // sequential block to define reset behavior
     always @(posedge i_clk) begin
         if (i_rst) begin
-            scrambler_state <= 58'b0;
+            scrambler_state <= 58'h0AAAAAAAAAAAAAA;
 
         // if the MAC is transmitting data
         end else if (i_mac_data_valid) begin
@@ -40,7 +40,7 @@ module eth_pcs_tx (
             scrambled_data <= i_mac_data ^ {scrambler_state[38:0], 25'b0}; 
 
             // Update the scrambler state with feedback (x^58 + x^39 + 1)
-            scrambler_state <= {scrambler_state[56:0], scrambler_state[57] ^ scrambler_state[38] ^ mac_data_in[63]};
+            scrambler_state <= {scrambler_state[56:0], scrambler_state[57] ^ scrambler_state[38] ^ i_mac_data[63]};
         end
     end
 
